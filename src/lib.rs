@@ -24,9 +24,8 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Edges {
 
 impl<'a> dot::GraphWalk<'a, Nd, Ed> for Edges {
     fn nodes(&self) -> dot::Nodes<'a, Nd> {
-        // (assumes that |N| \approxeq |E|)
         let &Edges { ref edges, .. } = self;
-        let mut nodes = Vec::with_capacity(edges.len());
+        let mut nodes = Vec::new();
         for &(s, t) in edges {
             nodes.push(s);
             nodes.push(t);
