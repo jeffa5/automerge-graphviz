@@ -6,7 +6,10 @@ use automerge_protocol::ChangeHash;
 type Nd = ChangeHash;
 type Ed = (ChangeHash, ChangeHash);
 
-struct Edges(Vec<Ed>);
+struct Edges {
+    edges: Vec<Ed>,
+    hash_length: usize,
+}
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Edges {
     fn graph_id(&'a self) -> dot::Id<'a> {
@@ -14,7 +17,7 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Edges {
     }
 
     fn node_id(&'a self, n: &Nd) -> dot::Id<'a> {
-        let hex = hex::encode(n.0);
+        let hex: String = hex::encode(n.0).chars().take(self.hash_length).collect();
         dot::Id::new(format!("N{}", hex)).unwrap()
     }
 }
@@ -22,9 +25,9 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Edges {
 impl<'a> dot::GraphWalk<'a, Nd, Ed> for Edges {
     fn nodes(&self) -> dot::Nodes<'a, Nd> {
         // (assumes that |N| \approxeq |E|)
-        let &Edges(ref v) = self;
-        let mut nodes = Vec::with_capacity(v.len());
-        for &(s, t) in v {
+        let &Edges { ref edges, .. } = self;
+        let mut nodes = Vec::with_capacity(edges.len());
+        for &(s, t) in edges {
             nodes.push(s);
             nodes.push(t);
         }
@@ -34,7 +37,7 @@ impl<'a> dot::GraphWalk<'a, Nd, Ed> for Edges {
     }
 
     fn edges(&'a self) -> dot::Edges<'a, Ed> {
-        let &Edges(ref edges) = self;
+        let &Edges { ref edges, .. } = self;
         Cow::Borrowed(&edges[..])
     }
 
@@ -47,7 +50,7 @@ impl<'a> dot::GraphWalk<'a, Nd, Ed> for Edges {
     }
 }
 
-pub fn graph_deps<W: Write>(changes: &[&Change], output: &mut W) {
+pub fn graph_deps<W: Write>(changes: &[&Change], output: &mut W, hash_length: usize) {
     let mut edges = Vec::new();
     for change in changes {
         for dep in change.deps.iter().cloned() {
@@ -57,7 +60,7 @@ pub fn graph_deps<W: Write>(changes: &[&Change], output: &mut W) {
     // for each change add it as a node (with hash)
     //
     // add edges to deps
-    dot::render(&Edges(edges), output).unwrap()
+    dot::render(&Edges { edges, hash_length }, output).unwrap()
 }
 
 #[cfg(test)]
@@ -84,7 +87,7 @@ mod tests {
     #[test]
     fn empty() {
         let mut v = Vec::new();
-        graph_deps(&[], &mut v);
+        graph_deps(&[], &mut v, 7);
         let s = String::from_utf8(v).unwrap();
         assert_eq!(
             &s,

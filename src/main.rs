@@ -15,6 +15,10 @@ struct Opts {
 
     /// File to write dot graph to.
     output: PathBuf,
+
+    /// Length of hashes to show.
+    #[structopt(long, default_value = "7")]
+    hash_length: usize,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -31,7 +35,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut v = Vec::new();
     let changes = backend.get_changes(&[]);
-    graph_deps(&changes, &mut v);
+    graph_deps(&changes, &mut v, opts.hash_length);
 
     let mut out = File::create(opts.output).context("Failed creating output file")?;
     out.write_all(&v)
