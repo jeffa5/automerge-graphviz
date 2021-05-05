@@ -65,6 +65,8 @@ pub fn graph_deps<W: Write>(changes: &[&Change], output: &mut W, hash_length: us
 
 #[cfg(test)]
 mod tests {
+    use automerge::{LocalChange, Path, Primitive, Value};
+
     use super::*;
 
     #[derive(PartialEq, Eq)]
@@ -95,5 +97,42 @@ mod tests {
 }
 "
         );
+    }
+
+    #[test]
+    fn minimal() {
+        let mut f = automerge::Frontend::new();
+        let mut b = automerge::Backend::init();
+
+        let change = f
+            .change::<_, _, std::convert::Infallible>(None, |d| {
+                d.add_change(LocalChange::set(
+                    Path::root().key("a"),
+                    Value::Primitive(Primitive::Int(1)),
+                ))
+                .unwrap();
+                Ok(())
+            })
+            .unwrap()
+            .1
+            .unwrap();
+        b.apply_local_change(change).unwrap();
+        let change = f
+            .change::<_, _, std::convert::Infallible>(None, |d| {
+                d.add_change(LocalChange::set(
+                    Path::root().key("b"),
+                    Value::Primitive(Primitive::Int(1)),
+                ))
+                .unwrap();
+                Ok(())
+            })
+            .unwrap()
+            .1
+            .unwrap();
+        b.apply_local_change(change).unwrap();
+
+        let mut v = Vec::new();
+        graph_deps(&b.get_changes(&[]), &mut v, 7);
+        String::from_utf8(v).unwrap();
     }
 }
