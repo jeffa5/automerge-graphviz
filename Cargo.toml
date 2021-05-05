@@ -1,0 +1,16 @@
+[package]
+name = "automerge-graphviz"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+dot = "0.1.4"
+automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge-backend = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+hex = "0.4.3"
+structopt = "0.3.21"
+anyhow = "1.0.40"
+
+[dev-dependencies]
+pretty_assertions = "0.7.2"
